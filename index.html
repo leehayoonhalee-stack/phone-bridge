@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<base target="_blank">
+<meta charset="utf-8">
+<title>폰 브릿지</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f6f5e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="폰 브릿지">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="color-scheme" content="light dark">
+<style>
+:root{--bg:#e8edf1;--top:#f7f9fa;--card:#fff;--ink:#1c1c1e;--muted:#6b7075;--line:#dbe1e6;--me:#2f6f5e;--me-ink:#fff;--accent:#2f6f5e;--soft:#e3eee9;--danger:#c0453c;--shadow:0 1px 2px rgba(0,0,0,.07)}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1214;--top:#171b1e;--card:#1f2427;--ink:#eceeef;--muted:#949a9f;--line:#2a3034;--me:#3c8a74;--me-ink:#fff;--accent:#5fb39a;--soft:#1d2a26;--danger:#e0756d;--shadow:none}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink)}
+body{font:15px/1.45 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",system-ui,sans-serif;-webkit-text-size-adjust:100%;display:flex;flex-direction:column;height:100vh;height:100dvh}
+button,input,textarea{font:inherit;color:inherit}
+a{color:inherit}
+.top{background:var(--top);border-bottom:1px solid var(--line);padding:calc(8px + env(safe-area-inset-top)) 12px 0}
+.bar{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:18px;flex:none}
+h1{font-size:17px;margin:0}
+.st{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.dot{width:7px;height:7px;border-radius:50%;background:#3aa776}.dot.off{background:var(--danger)}
+.sp{flex:1}
+.ib{border:0;background:transparent;width:40px;height:40px;border-radius:10px;font-size:19px;cursor:pointer;display:grid;place-items:center;text-decoration:none;flex:none}
+.ib:hover{background:var(--soft)}
+.chips{max-width:760px;margin:4px auto 0;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.chip{border:0;background:transparent;padding:7px 12px 9px;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.chip.on{color:var(--ink);font-weight:700;border-color:var(--ink)}
+.err,.test{max-width:760px;margin:0 auto 8px;border-radius:10px;padding:8px 10px;font-size:13px}
+.err{background:color-mix(in srgb,var(--danger) 12%,var(--card));border:1px solid var(--danger)}
+.test{background:var(--soft);border:1px solid var(--accent);white-space:pre-wrap}
+#main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.chat{max-width:760px;margin:0 auto;padding:12px 12px 20px;display:flex;flex-direction:column;gap:10px}
+.day{align-self:center;font-size:12px;color:var(--muted);background:color-mix(in srgb,var(--card) 65%,transparent);padding:3px 12px;border-radius:999px;margin:6px 0}
+.msg{display:flex;flex-direction:column;max-width:86%;align-items:flex-start;animation:pop .2s ease}
+.msg.me{align-self:flex-end;align-items:flex-end}
+@keyframes pop{from{opacity:0;transform:translateY(4px)}}
+.who{font-size:12px;color:var(--muted);margin:0 0 3px 4px}
+.line{display:flex;align-items:flex-end;gap:6px;max-width:100%}
+.msg.me .line{flex-direction:row-reverse}
+.stack{display:flex;flex-direction:column;gap:4px;align-items:flex-start;min-width:0}
+.msg.me .stack{align-items:flex-end}
+.side{display:flex;flex-direction:column;align-items:center;gap:1px;flex:none}
+.side time{font-size:11px;color:var(--muted);white-space:nowrap}
+.cnt{font-size:11px;color:var(--accent);font-weight:700}
+.more{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:17px;line-height:1;padding:3px 6px;border-radius:6px}
+.more:hover{background:var(--card);color:var(--ink)}
+.bub{background:var(--card);border-radius:4px 16px 16px 16px;padding:8px 12px;white-space:pre-wrap;word-break:break-word;box-shadow:var(--shadow);max-height:360px;overflow:auto}
+.msg.me .bub{background:var(--me);color:var(--me-ink);border-radius:16px 4px 16px 16px}
+.bub a{color:inherit;text-decoration:underline}
+.lnk{display:flex;gap:10px;align-items:center;background:var(--card);border-radius:14px;padding:10px 12px;text-decoration:none;box-shadow:var(--shadow);max-width:300px}
+.lnk .fv{width:36px;height:36px;border-radius:9px;background:var(--soft);display:grid;place-items:center;flex:none}
+.lnk b{display:block;font-size:14px}.lnk small{color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-all;font-size:12px}
+.grid{display:grid;gap:3px;border-radius:14px;overflow:hidden;width:min(300px,62vw)}
+.grid.n1{width:auto;max-width:min(300px,62vw)}
+.grid.n2,.grid.n4{grid-template-columns:1fr 1fr}
+.grid.n3,.grid.nm{grid-template-columns:1fr 1fr 1fr}
+.tile{position:relative;aspect-ratio:1;background:var(--soft);cursor:zoom-in;overflow:hidden}
+.grid.n1 .tile{aspect-ratio:auto;min-width:120px;min-height:90px}
+.tile img{width:100%;height:100%;object-fit:cover;display:block}
+.grid.n1 .tile img{height:auto;max-height:360px;object-fit:contain}
+.tile .plus{position:absolute;inset:0;background:rgba(0,0,0,.45);color:#fff;font-size:22px;font-weight:700;display:grid;place-items:center}
+.files{background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;width:min(300px,68vw)}
+.fr{display:flex;align-items:center;gap:10px;padding:9px 10px;text-decoration:none}
+.fr+.fr{border-top:1px solid var(--line)}
+.fr .ic{width:36px;height:36px;border-radius:9px;background:var(--soft);display:grid;place-items:center;font-size:18px;flex:none}
+.fr .nm{font-size:14px;font-weight:600;word-break:break-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fr .sz{font-size:12px;color:var(--muted)}
+.fr .dl{margin-left:auto;font-size:17px;color:var(--muted);flex:none;padding-left:6px}
+.sending .stack{opacity:.7}
+.prog{height:3px;background:var(--line);border-radius:2px;overflow:hidden;width:120px}
+.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+.pst{font-size:11px;color:var(--muted)}
+.empty{text-align:center;color:var(--muted);padding:60px 16px;line-height:1.7}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:3px;border-radius:12px;overflow:hidden}
+.list{display:grid;gap:12px}
+.comp{background:var(--top);border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
+.cin{max-width:760px;margin:0 auto}
+.tray{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;align-items:center}
+.tr{position:relative;flex:none;width:62px;height:62px;border-radius:10px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;font-size:11px;text-align:center}
+.tr img{width:100%;height:100%;object-fit:cover}
+.tr span{padding:3px;word-break:break-all;line-height:1.2;max-height:100%;overflow:hidden}
+.tr button{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:11px;cursor:pointer;padding:0}
+.trn{font-size:12px;color:var(--muted);flex:none;padding:0 4px}
+.crow{display:flex;align-items:flex-end;gap:6px}
+.add{width:40px;height:40px;border-radius:50%;background:var(--card);font-size:24px;cursor:pointer;flex:none;display:grid;place-items:center;box-shadow:var(--shadow);color:var(--accent)}
+#txt{flex:1;min-width:0;border:1px solid var(--line);background:var(--card);border-radius:20px;padding:9px 14px;resize:none;outline:0;max-height:140px;height:40px;line-height:1.4}
+#txt:focus{border-color:var(--accent)}
+#send{height:40px;border:0;border-radius:20px;padding:0 16px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;flex:none;white-space:nowrap}
+#send:disabled{opacity:.35;cursor:default}
+.drop{position:fixed;inset:0;background:color-mix(in srgb,var(--accent) 18%,transparent);border:3px dashed var(--accent);display:none;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--accent);z-index:50}
+.drop.on{display:flex}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:60}
+.modal.on{display:flex}
+.sheet{background:var(--card);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));width:100%;max-width:440px;max-height:88vh;overflow:auto}
+@media (min-width:600px){.modal{align-items:center}.sheet{border-radius:18px}}
+.sheet h2{margin:0 0 2px;font-size:17px}
+.act{display:flex;align-items:center;gap:12px;width:100%;border:0;background:transparent;padding:13px 8px;font-size:16px;cursor:pointer;text-align:left;border-radius:10px;text-decoration:none}
+.act:hover{background:var(--soft)}
+.act.red{color:var(--danger)}
+.hint{font-size:13px;color:var(--muted)}
+.qr{background:#fff;padding:12px;border-radius:12px;width:max-content;margin:14px auto}
+.url{font:12px ui-monospace,Menlo,monospace;background:var(--soft);padding:8px;border-radius:8px;word-break:break-all}
+.steps{padding-left:20px;margin:12px 0}.steps li{margin:4px 0}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 14px;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.viewer{position:fixed;inset:0;background:#000;display:none;flex-direction:column;z-index:70;color:#fff}
+.viewer.on{display:flex}
+.vtop{display:flex;align-items:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 8px 6px}
+.vtop .ib{color:#fff}.vtop .ib:hover{background:rgba(255,255,255,.14)}
+.vimg{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;position:relative;padding-bottom:env(safe-area-inset-bottom)}
+.vimg img{max-width:100%;max-height:100%;object-fit:contain}
+.nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:28px;cursor:pointer;border-radius:10px}
+.nav.l{left:8px}.nav.r{right:8px}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:80;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="bar">
+    <div class="logo">⇄</div>
+    <div><h1>폰 브릿지</h1><div class="st"><span class="dot off" id="dot"></span><span id="stat">연결 중…</span></div></div>
+    <div class="sp"></div>
+    <a class="ib" id="folderBtn" href="#" title="드라이브 폴더 열기" hidden>📁</a>
+    <button class="ib" id="connectBtn" title="다른 기기 연결">📱</button>
+  </div>
+  <div class="chips" id="chips">
+    <button class="chip on" data-f="all">대화</button>
+    <button class="chip" data-f="image">사진</button>
+    <button class="chip" data-f="file">파일</button>
+    <button class="chip" data-f="text">링크·글</button>
+  </div>
+  <div class="err" id="err" hidden></div>
+  <div class="test" id="test" hidden></div>
+</div>
+
+<div id="main"><div class="chat" id="chat"><div class="empty">불러오는 중…</div></div></div>
+
+<div class="comp">
+  <div class="cin">
+    <div class="tray" id="tray" hidden></div>
+    <div class="crow">
+      <label class="add" title="사진·파일 추가">＋<input type="file" id="pick" multiple hidden></label>
+      <textarea id="txt" rows="1" placeholder="메시지나 링크 입력"></textarea>
+      <button id="send" target="_self" disabled>전송</button>
+    </div>
+  </div>
+</div>
+
+<div class="drop" id="drop">놓으면 보낼 목록에 담겨요</div>
+<div class="modal" id="actModal"><div class="sheet" id="actSheet"></div></div>
+<div class="modal" id="connectModal">
+  <div class="sheet">
+    <h2>다른 기기에서 열기</h2>
+    <div class="hint">이 QR에는 내 열쇠가 들어 있어요. 로그인 없이 어디서든 열려요. 다른 사람에게는 보여 주지 마세요.</div>
+    <div class="qr" id="qr"></div>
+    <div class="url" id="appUrl"></div>
+    <ol class="steps">
+      <li>휴대폰 카메라로 QR을 찍어요.</li>
+      <li>열리면 바로 내 대화가 보여요. 로그인은 필요 없어요.</li>
+      <li>앱으로 설치해요.<br><span class="hint">안드로이드·PC 크롬: ⋮ → 앱 설치 · 아이폰 사파리: 공유 → 홈 화면에 추가</span></li>
+    </ol>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" id="copyUrl">주소 복사</button>
+      <button class="btn pri" id="closeConnect">닫기</button>
+    </div>
+  </div>
+</div>
+<div class="viewer" id="viewer">
+  <div class="vtop"><button class="ib" id="vClose" title="닫기">✕</button><span id="vCount"></span><div class="sp"></div><a class="ib" id="vSave" title="저장">⬇︎</a></div>
+  <div class="vimg" id="vBox"><img id="vImg" alt=""><button class="nav l" id="vPrev">‹</button><button class="nav r" id="vNext">›</button></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<div id="keyGate" hidden style="position:fixed;inset:0;z-index:99;background:var(--bg);display:grid;place-items:center;padding:24px">
+  <form id="keyForm" style="background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;max-width:380px;width:100%">
+    <div style="font-size:34px">🔑</div>
+    <h2 style="margin:6px 0 6px;font-size:19px">열쇠를 넣어 주세요</h2>
+    <p id="keyMsg" style="color:var(--muted);margin:0 0 14px;font-size:14px">컴퓨터 앱의 📱 버튼에 있는 QR을 찍거나, 거기서 복사한 주소를 붙여 넣으세요.</p>
+    <input id="keyIn" autocomplete="off" placeholder="주소 또는 열쇠" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
+    <button style="margin-top:12px;width:100%;padding:12px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-weight:600">열기</button>
+  </form>
+</div>
+<script>
+(() => {
+  const API = 'https://script.google.com/macros/s/AKfycbyF82VoDS3qvaTkKVJ_8E82hsSxPHvbaNARaWEAmPeAqrtyM7-sl8fMPrfUXoXwTyIQ/exec';
+  const LS = 'pb_key', q = new URLSearchParams(location.search);
+  const get = () => { try { return localStorage.getItem(LS); } catch (e) { return null; } };
+  const put = k => { try { k ? localStorage.setItem(LS, k) : localStorage.removeItem(LS); } catch (e) {} };
+  let key = q.get('k') || get();
+  if (q.get('k')) put(key);
+  const ask = msg => new Promise(res => {
+    const g = document.getElementById('keyGate'), f = document.getElementById('keyForm'), i = document.getElementById('keyIn');
+    if (msg) document.getElementById('keyMsg').textContent = msg;
+    g.hidden = false; i.focus();
+    f.onsubmit = e => {
+      e.preventDefault();
+      let v = i.value.trim(); const m = v.match(/[?&]k=([^&#\s]+)/); if (m) v = decodeURIComponent(m[1]);
+      if (!v) return; g.hidden = true; put(v); res(v);
+    };
+  });
+  async function getSession() {
+    for (;;) {
+      if (!key) key = await ask();
+      let j;
+      try { j = await (await fetch(API + '?api=1&k=' + encodeURIComponent(key))).json(); }
+      catch (e) { throw new Error('서버에 연결하지 못했어요. 인터넷을 확인해 주세요.'); }
+      if (j && j.error === 'key') { put(null); key = await ask('열쇠가 맞지 않아요. 새 QR로 다시 열어 주세요.'); continue; }
+      j.appUrl = location.origin + location.pathname + '?k=' + encodeURIComponent(key);
+      return j;
+    }
+  }
+  const fns = { getSession };
+  window.google = { script: {
+    run: { withSuccessHandler: s => ({ withFailureHandler: f => new Proxy({}, { get: (_, n) => (...a) => fns[n](...a).then(s, f) }) }) },
+    url: { getLocation: cb => cb({ parameter: Object.fromEntries(q) }) }
+  } };
+  if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  let ip = null;
+  addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); ip = e;
+    if (document.getElementById('installBtn')) return;
+    const b = document.createElement('button'); b.className = 'ib'; b.id = 'installBtn'; b.title = '앱 설치'; b.textContent = '⬇︎';
+    b.onclick = async () => { if (!ip) return; ip.prompt(); await ip.userChoice; ip = null; b.remove(); };
+    document.getElementById('connectBtn').before(b);
+  });
+})();
+</script>
+<script>
+const $ = s => document.querySelector(s);
+const DRIVE = 'https://www.googleapis.com/drive/v3/files';
+const UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files';
+const DEV = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) ? 'phone' : 'pc';
+const DEVL = { phone: '📱 폰', pc: '💻 컴퓨터', drive: '☁️ 드라이브' };
+const DESC_MAX = 3500;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const run = (fn, ...a) => new Promise((res, rej) =>
+  google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](...a));
+
+let S = null, sAt = 0, items = [], sig = null, filter = 'all', blobs = {}, pend = [], tray = [], first = true;
+
+async function session(force) {
+  if (!S || force || Date.now() - sAt > 40 * 60e3) { S = await run('getSession'); sAt = Date.now(); }
+  return S;
+}
+async function api(url, opts = {}, retry = true) {
+  const s = await session();
+  const r = await fetch(url, { ...opts, headers: { ...(opts.headers || {}), Authorization: 'Bearer ' + s.token } });
+  if (r.status === 401 && retry) { await session(true); return api(url, opts, false); }
+  if (!r.ok) throw new Error('드라이브 응답 ' + r.status);
+  return r;
+}
+
+/* ---------- 목록 ---------- */
+function toItem(f) {
+  const p = f.appProperties || {};
+  const kind = p.pb_kind === 'text' ? 'text' : (f.mimeType || '').startsWith('image/') ? 'image' : 'file';
+  return { id: f.id, kind, name: f.name, mime: f.mimeType, size: +f.size || 0, ts: f.createdTime,
+    dev: p.pb_dev || 'drive', text: f.description || '', trunc: p.pb_trunc === '1',
+    batch: p.pb_batch || f.id, ord: +p.pb_ord || 0, test: p.pb_test === '1',
+    thumb: f.thumbnailLink, view: f.webViewLink, dl: f.webContentLink };
+}
+async function load() {
+  const s = await session();
+  const q = encodeURIComponent(`'${s.folderId}' in parents and trashed=false`);
+  const fields = 'files(id,name,mimeType,size,createdTime,modifiedTime,description,appProperties,thumbnailLink,webViewLink,webContentLink)';
+  const j = await (await api(`${DRIVE}?q=${q}&orderBy=createdTime desc&pageSize=500&fields=${fields}`)).json();
+  const nsig = j.files.map(f => f.id + f.modifiedTime + (f.thumbnailLink ? 1 : 0)).join();
+  online(true);
+  if (nsig !== sig) { sig = nsig; items = j.files.map(toItem).reverse(); render(); }
+}
+let timer;
+async function loop() {
+  clearTimeout(timer);
+  try { await load(); } catch (e) { online(false, e); }
+  timer = setTimeout(loop, document.hidden ? 20000 : 3000);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loop(); });
+window.addEventListener('focus', loop);
+
+function online(ok, e) {
+  $('#dot').classList.toggle('off', !ok);
+  $('#stat').textContent = ok ? '드라이브 연결됨 · ' + DEVL[DEV] + '에서 보는 중' : '연결 끊김 · 다시 시도 중';
+  $('#err').hidden = ok;
+  if (!ok) $('#err').textContent = '드라이브에 연결하지 못했어요. 인터넷을 확인해 주세요. (' + (e && e.message || e) + ')';
+}
+
+/* ---------- 묶음 ---------- */
+function groups() {
+  const m = new Map();
+  for (const it of items) {
+    let g = m.get(it.batch);
+    if (!g) m.set(it.batch, g = { key: it.batch, dev: it.dev, ts: it.ts, list: [] });
+    g.list.push(it); if (it.ts < g.ts) g.ts = it.ts;
+  }
+  const gs = [...m.values()];
+  gs.forEach(g => g.list.sort((a, b) => a.ord - b.ord || (a.ts < b.ts ? -1 : 1)));
+  return gs.sort((a, b) => a.ts < b.ts ? -1 : 1);
+}
+const groupOf = key => groups().find(g => g.key === key);
+function summary(list) {
+  const c = k => list.filter(i => i.kind === k).length, out = [];
+  if (c('image')) out.push(`사진 ${c('image')}장`);
+  if (c('file')) out.push(`파일 ${c('file')}개`);
+  if (c('text')) out.push(list.find(i => i.kind === 'text' && isLink(i.text)) ? '링크' : '글');
+  return out.join(' · ');
+}
+
+/* ---------- 그리기 ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const linkify = s => esc(s).replace(/https?:\/\/[^\s<]+/g, u => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
+const isLink = t => /^https?:\/\/\S+$/.test(t.trim());
+const size = n => n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(0) + ' KB' : n < 1073741824 ? (n / 1048576).toFixed(1) + ' MB' : (n / 1073741824).toFixed(2) + ' GB';
+const hm = t => new Date(t).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
+const dayLabel = d => d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+function when(t) {
+  const d = new Date(t);
+  return d.toDateString() === new Date().toDateString() ? hm(t) : `${d.getMonth() + 1}월 ${d.getDate()}일 ${hm(t)}`;
+}
+function fileIcon(it) {
+  const m = it.mime || '', n = (it.name || '').toLowerCase();
+  if (m.startsWith('image/')) return '🖼️'; if (m.startsWith('video/')) return '🎬'; if (m.startsWith('audio/')) return '🎵';
+  if (m.includes('pdf')) return '📕'; if (/zip|rar|7z|tar|gz/.test(m + n)) return '🗜️';
+  if (/sheet|excel|csv|xls/.test(m + n)) return '📊'; if (/presentation|powerpoint|ppt|key/.test(m + n)) return '📽️';
+  if (/document|word|hwp|doc|text/.test(m + n)) return '📄'; return '📦';
+}
+const thumbAt = (it, px) => it.thumb ? it.thumb.replace(/=s\d+$/, '=s' + px) : '';
+const tile = (it, px, extra = '') => `<div class="tile" data-a="view" data-id="${it.id}"><img loading="lazy" alt="" data-id="${it.id}" src="${esc(thumbAt(it, px) || blobs[it.id] || '')}">${extra}</div>`;
+
+function gridHTML(imgs) {
+  const n = imgs.length, cls = n <= 4 ? 'n' + n : 'nm', show = imgs.slice(0, 9);
+  return `<div class="grid ${cls}">` + show.map((it, i) => tile(it, n === 1 ? 800 : 400, i === 8 && n > 9 ? `<div class="plus">+${n - 9}</div>` : '')).join('') + '</div>';
+}
+function frHTML(it, meta) {
+  const sub = (it.size ? size(it.size) : '구글 문서') + (meta ? ' · ' + DEVL[it.dev] + ' · ' + when(it.ts) : '');
+  return `<a class="fr" href="${esc(it.dl || it.view)}" target="_blank" rel="noopener"><div class="ic">${fileIcon(it)}</div><div style="min-width:0"><div class="nm">${esc(it.name)}</div><div class="sz">${sub}</div></div><span class="dl">${it.dl ? '⬇︎' : '↗'}</span></a>`;
+}
+function textHTML(t) {
+  const s = t.text.trim();
+  if (isLink(s)) {
+    let host = s; try { host = new URL(s).hostname.replace(/^www\./, ''); } catch (e) {}
+    return `<a class="lnk" href="${esc(s)}" target="_blank" rel="noopener"><span class="fv">🔗</span><span style="min-width:0"><b>${esc(host)}</b><small>${esc(s)}</small></span></a>`;
+  }
+  return `<div class="bub">${linkify(t.text)}${t.trunc ? '… <i>(⋯ → 글 복사로 전체 보기)</i>' : ''}</div>`;
+}
+function groupHTML(g) {
+  const imgs = g.list.filter(i => i.kind === 'image'), files = g.list.filter(i => i.kind === 'file'), texts = g.list.filter(i => i.kind === 'text');
+  let s = '';
+  if (imgs.length) s += gridHTML(imgs);
+  if (files.length) s += `<div class="files">${files.map(f => frHTML(f)).join('')}</div>`;
+  texts.forEach(t => s += textHTML(t));
+  const me = g.dev === DEV, n = g.list.length;
+  return `<div class="msg ${me ? 'me' : ''}" data-g="${esc(g.key)}">${me ? '' : `<div class="who">${DEVL[g.dev] || g.dev}</div>`}<div class="line"><div class="stack">${s}</div><div class="side"><button class="more" data-a="more" title="더보기">⋯</button>${n > 1 ? `<span class="cnt">${n}개</span>` : ''}<time>${hm(g.ts)}</time></div></div></div>`;
+}
+function pendHTML(p) {
+  let s = '';
+  const imgs = p.files.filter(f => f.url);
+  if (imgs.length) s += `<div class="grid ${imgs.length <= 4 ? 'n' + imgs.length : 'nm'}">${imgs.slice(0, 9).map(f => `<div class="tile"><img src="${f.url}" alt=""></div>`).join('')}</div>`;
+  const others = p.files.filter(f => !f.url);
+  if (others.length) s += `<div class="files">${others.map(f => `<div class="fr"><div class="ic">${fileIcon({ mime: f.type, name: f.name })}</div><div class="nm">${esc(f.name)}</div></div>`).join('')}</div>`;
+  if (p.text) s += `<div class="bub">${esc(p.text)}</div>`;
+  const pct = Math.round(p.pct * 100);
+  return `<div class="msg me sending" id="pend-${p.key}"><div class="line"><div class="stack">${s}</div><div class="side"><span class="pst">${p.state === 'fail' ? '⚠️ 실패' : pct + '%'}</span></div></div><div class="prog"><i style="width:${pct}%"></i></div></div>`;
+}
+const emptyMsg = w => `<div class="empty">아직 ${w}이 없어요.</div>`;
+
+function render() {
+  pend = pend.filter(p => !(p.state === 'sent' && (items.filter(i => i.batch === p.key).length >= p.n || Date.now() - p.at > 20000)));
+  const main = $('#main'), stick = first || main.scrollHeight - main.scrollTop - main.clientHeight < 120;
+  const box = $('#chat'), rev = [...items].reverse();
+  let h = '';
+  if (filter === 'all') {
+    let last = '';
+    for (const g of groups()) {
+      const d = new Date(g.ts);
+      if (d.toDateString() !== last) { last = d.toDateString(); h += `<div class="day">${dayLabel(d)}</div>`; }
+      h += groupHTML(g);
+    }
+    h += pend.map(pendHTML).join('');
+    if (!h) h = `<div class="empty">아직 아무것도 없어요.<br>아래 <b>＋</b>로 사진·파일을 고르거나 글을 써서 보내 보세요.<br><span class="hint">여러 개를 한 번에 고르면 한 묶음으로 보내져요.</span></div>`;
+  } else if (filter === 'image') {
+    const l = rev.filter(i => i.kind === 'image');
+    h = l.length ? `<div class="gal">${l.map(it => tile(it, 400)).join('')}</div>` : emptyMsg('사진');
+  } else if (filter === 'file') {
+    const l = rev.filter(i => i.kind === 'file');
+    h = l.length ? `<div class="files" style="width:100%">${l.map(it => frHTML(it, true)).join('')}</div>` : emptyMsg('파일');
+  } else {
+    const l = rev.filter(i => i.kind === 'text');
+    h = l.length ? `<div class="list">${l.map(t => `<div class="msg" style="max-width:100%" data-g="${esc(t.batch)}"><div class="who">${DEVL[t.dev]} · ${when(t.ts)}</div><div class="line"><div class="stack" style="min-width:0">${textHTML(t)}</div><div class="side"><button class="more" data-a="more">⋯</button></div></div></div>`).join('')}</div>` : emptyMsg('링크나 글');
+  }
+  box.innerHTML = h;
+  box.querySelectorAll('img[data-id]').forEach(img => {
+    const it = items.find(x => x.id === img.dataset.id);
+    const fallback = () => { img.onerror = null; blobUrl(it).then(u => img.src = u).catch(() => {}); };
+    img.onerror = fallback;
+    img.onload = () => { if (stick && filter === 'all') main.scrollTop = main.scrollHeight; };
+    if (!img.getAttribute('src')) fallback();
+  });
+  if (stick && filter === 'all') main.scrollTop = main.scrollHeight;
+  if (filter !== 'all' && first) main.scrollTop = 0;
+  first = false;
+}
+
+async function blobUrl(it) {
+  if (blobs[it.id]) return blobs[it.id];
+  if (it.size > 40 * 1048576) throw new Error('too big');
+  const b = await (await api(`${DRIVE}/${it.id}?alt=media`)).blob();
+  return blobs[it.id] = URL.createObjectURL(b);
+}
+async function fullText(it) { return it.trunc ? (await api(`${DRIVE}/${it.id}?alt=media`)).text() : it.text; }
+
+/* ---------- 사진 보기 ---------- */
+let vList = [], vIdx = 0;
+function openViewer(list, idx) { vList = list; vIdx = idx; showV(); $('#viewer').classList.add('on'); }
+function showV() {
+  const it = vList[vIdx], img = $('#vImg');
+  img.onerror = () => { img.onerror = null; blobUrl(it).then(u => img.src = u).catch(() => {}); };
+  img.src = thumbAt(it, 2000) || blobs[it.id] || '';
+  if (!img.getAttribute('src')) img.onerror();
+  $('#vCount').textContent = vList.length > 1 ? `${vIdx + 1} / ${vList.length}` : it.name;
+  $('#vSave').href = it.dl || it.view;
+  $('#vPrev').hidden = vIdx === 0; $('#vNext').hidden = vIdx >= vList.length - 1;
+}
+const stepV = d => { const n = vIdx + d; if (n >= 0 && n < vList.length) { vIdx = n; showV(); } };
+const closeV = () => $('#viewer').classList.remove('on');
+$('#vPrev').onclick = () => stepV(-1); $('#vNext').onclick = () => stepV(1); $('#vClose').onclick = closeV;
+$('#vBox').addEventListener('click', e => { if (e.target.id === 'vBox') closeV(); });
+let tx = null;
+$('#vBox').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+$('#vBox').addEventListener('touchend', e => { if (tx == null) return; const dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 50) stepV(dx < 0 ? 1 : -1); tx = null; });
+addEventListener('keydown', e => {
+  if (!$('#viewer').classList.contains('on')) return;
+  if (e.key === 'ArrowLeft') stepV(-1); if (e.key === 'ArrowRight') stepV(1); if (e.key === 'Escape') closeV();
+});
+
+/* ---------- 묶음 메뉴 ---------- */
+let curG = null;
+function openActs(g) {
+  curG = g;
+  const texts = g.list.filter(i => i.kind === 'text'), media = g.list.filter(i => i.kind !== 'text');
+  const link = texts.find(t => isLink(t.text));
+  let h = `<h2>${summary(g.list)}</h2><div class="hint">${DEVL[g.dev] || ''} · ${when(g.ts)}</div><div style="margin-top:8px">`;
+  if (texts.length) h += `<button class="act" data-x="copy">📋 글 복사</button>`;
+  if (link) h += `<a class="act" href="${esc(link.text.trim())}" target="_blank" rel="noopener">🔗 링크 열기</a>`;
+  if (media.length === 1) h += `<a class="act" href="${esc(media[0].dl || media[0].view)}" target="_blank" rel="noopener">⬇︎ 저장</a>`;
+  if (media.length > 1) h += `<button class="act" data-x="saveall">⬇︎ ${media.length}개 모두 저장</button>`;
+  if (S) h += `<a class="act" href="${esc(S.folderUrl)}" target="_blank" rel="noopener">📁 드라이브 폴더 열기</a>`;
+  h += `<button class="act red" data-x="del">🗑️ ${g.list.length > 1 ? `묶음 전체(${g.list.length}개) ` : ''}삭제</button><button class="act" data-x="close">닫기</button></div>`;
+  $('#actSheet').innerHTML = h; $('#actModal').classList.add('on');
+}
+const closeActs = () => $('#actModal').classList.remove('on');
+$('#actModal').addEventListener('click', async e => {
+  if (e.target.id === 'actModal') return closeActs();
+  const b = e.target.closest('[data-x], a.act'); if (!b) return;
+  const g = curG, x = b.dataset.x; closeActs();
+  if (x === 'copy') copy((await Promise.all(g.list.filter(i => i.kind === 'text').map(fullText))).join('\n\n'));
+  if (x === 'saveall') saveAll(g.list.filter(i => i.kind !== 'text'));
+  if (x === 'del') {
+    if (!confirm(`${summary(g.list)}을(를) 지울까요?\n드라이브 휴지통으로 옮겨져서 30일 동안은 되살릴 수 있어요.`)) return;
+    try { await Promise.all(g.list.map(trash)); items = items.filter(i => i.batch !== g.key); render(); toast('휴지통으로 옮겼어요'); loop(); }
+    catch (err) { toast('삭제 실패: ' + err.message); loop(); }
+  }
+});
+const trash = it => api(`${DRIVE}/${it.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trashed: true }) });
+async function saveAll(list) {
+  let ok = 0;
+  for (const [i, it] of list.entries()) {
+    toast(`저장하는 중 ${i + 1} / ${list.length}`);
+    try {
+      const u = await blobUrl(it);
+      const a = document.createElement('a'); a.href = u; a.download = it.name; a.target = '_self'; document.body.append(a); a.click(); a.remove(); ok++;
+      await sleep(500);
+    } catch (e) { window.open(it.dl || it.view, '_blank'); }
+  }
+  toast(`${ok}개 저장했어요`);
+}
+
+$('#chat').addEventListener('click', e => {
+  const el = e.target.closest('[data-a]'); if (!el) return;
+  if (el.dataset.a === 'view') {
+    const id = el.dataset.id;
+    let list;
+    if (filter === 'image') list = [...items].reverse().filter(i => i.kind === 'image');
+    else list = groupOf(el.closest('[data-g]').dataset.g).list.filter(i => i.kind === 'image');
+    openViewer(list, Math.max(0, list.findIndex(i => i.id === id)));
+  }
+  if (el.dataset.a === 'more') { const g = groupOf(el.closest('[data-g]').dataset.g); if (g) openActs(g); }
+});
+$('#chips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  document.querySelectorAll('.chip').forEach(t => t.classList.toggle('on', t === b));
+  filter = b.dataset.f; first = true; render();
+});
+
+/* ---------- 보내기 ---------- */
+function stamp() {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}.${p(d.getMinutes())}.${p(d.getSeconds())}`;
+}
+function nameOf(f, i, n) {
+  let name = f.name || '';
+  if (!name || /^image\.(png|jpe?g|gif|webp|heic)$/i.test(name))
+    name = '사진 ' + stamp() + (n > 1 ? '-' + (i + 1) : '') + '.' + ((f.type.split('/')[1] || 'png').replace('jpeg', 'jpg'));
+  return name;
+}
+const mp = (meta, type, data) => {
+  const b = 'pb' + Math.random().toString(36).slice(2);
+  return { b, body: new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: ${type}\r\n\r\n`, data, `\r\n--${b}--`]) };
+};
+async function upText(t, props) {
+  const s = await session();
+  const meta = { name: (isLink(t) ? '링크 ' : '메모 ') + stamp() + '.txt', parents: [s.folderId], mimeType: 'text/plain',
+    description: t.slice(0, DESC_MAX), appProperties: Object.assign({}, props, { pb_kind: 'text' }, t.length > DESC_MAX ? { pb_trunc: '1' } : {}) };
+  const { b, body } = mp(meta, 'text/plain; charset=UTF-8', t);
+  await api(`${UPLOAD}?uploadType=multipart&fields=id`, { method: 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + b }, body });
+}
+function xhrSend(method, url, headers, body, onp) {
+  return new Promise((res, rej) => {
+    const x = new XMLHttpRequest(); x.open(method, url);
+    Object.entries(headers).forEach(([k, v]) => x.setRequestHeader(k, v));
+    x.upload.onprogress = e => e.lengthComputable && onp(e.loaded / e.total);
+    x.onload = () => x.status < 300 ? res() : rej(new Error('응답 ' + x.status));
+    x.onerror = () => rej(new Error('네트워크 오류'));
+    x.send(body);
+  });
+}
+async function upFile(file, name, props, onp) {
+  const s = await session();
+  const type = file.type || 'application/octet-stream';
+  const meta = { name, parents: [s.folderId], appProperties: props };
+  let loc = null;
+  try {
+    const init = await api(`${UPLOAD}?uploadType=resumable&fields=id`, { method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': type },
+      body: JSON.stringify(meta) });
+    loc = init.headers.get('Location');
+  } catch (e) { loc = null; }
+  if (loc) return xhrSend('PUT', loc, { 'Content-Type': type }, file, onp);
+  const { b, body } = mp(meta, type, file);
+  return xhrSend('POST', `${UPLOAD}?uploadType=multipart&fields=id`, { Authorization: 'Bearer ' + s.token, 'Content-Type': 'multipart/related; boundary=' + b }, body, onp);
+}
+async function pool(jobs, n) {
+  const out = []; let i = 0;
+  await Promise.all(Array.from({ length: Math.min(n, jobs.length) }, async () => {
+    while (i < jobs.length) { const k = i++; try { out[k] = { ok: true, v: await jobs[k]() }; } catch (e) { out[k] = { ok: false, e }; } }
+  }));
+  return out;
+}
+async function sendBatch(text, files, extra = {}) {
+  const key = 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const names = files.map((f, i) => nameOf(f, i, files.length));
+  const p = { key, text, at: Date.now(), state: 'up', pct: 0, n: files.length + (text ? 1 : 0),
+    files: files.map((f, i) => ({ name: names[i], type: f.type, url: (f.type || '').startsWith('image/') ? URL.createObjectURL(f) : '' })) };
+  const total = files.reduce((a, f) => a + f.size, 0) + (text ? 1 : 0) || 1, got = {};
+  const tick = (k, v) => { got[k] = v; p.pct = Object.values(got).reduce((a, b) => a + b, 0) / total;
+    const el = document.getElementById('pend-' + key); if (el) { el.querySelector('.prog i').style.width = (p.pct * 100) + '%'; el.querySelector('.pst').textContent = Math.round(p.pct * 100) + '%'; } };
+  pend.push(p); if (filter === 'all') { render(); $('#main').scrollTop = 1e9; }
+  const base = Object.assign({ pb_dev: DEV, pb_batch: key }, extra);
+  const jobs = [];
+  if (text) jobs.push(() => upText(text, Object.assign({}, base, { pb_ord: '0' })).then(() => tick('t', 1)));
+  files.forEach((f, i) => jobs.push(() => upFile(f, names[i], Object.assign({}, base, { pb_ord: String(i + 1) }), fr => tick(i, fr * f.size)).then(() => tick(i, f.size))));
+  const res = await pool(jobs, 3);
+  const fails = res.filter(r => !r.ok);
+  if (fails.length) {
+    p.state = 'fail'; render(); toast(`${fails.length}개를 보내지 못했어요 (${fails[0].e.message})`);
+    setTimeout(() => { pend = pend.filter(x => x !== p); render(); }, 6000);
+  } else { p.state = 'sent'; }
+  await loop();
+  return { key, fails };
+}
+async function send() {
+  const text = $('#txt').value.trim(), files = tray.slice();
+  if (!text && !files.length) return;
+  $('#txt').value = ''; grow(); tray = []; drawTray();
+  await sendBatch(text, files);
+}
+
+/* ---------- 보낼 목록(트레이) ---------- */
+const urls = new WeakMap();
+const thumbOf = f => { if (!urls.has(f)) urls.set(f, URL.createObjectURL(f)); return urls.get(f); };
+function addFiles(fs) { tray.push(...fs); drawTray(); }
+function drawTray() {
+  const t = $('#tray'); t.hidden = !tray.length;
+  t.innerHTML = tray.map((f, i) => `<div class="tr">${(f.type || '').startsWith('image/') ? `<img src="${thumbOf(f)}" alt="">` : `<span>${fileIcon({ mime: f.type, name: f.name })}<br>${esc(f.name)}</span>`}<button data-i="${i}" title="빼기">✕</button></div>`).join('')
+    + (tray.length ? `<span class="trn">${tray.length}개를 한 번에 보내요</span>` : '');
+  upd();
+}
+$('#tray').addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b) { tray.splice(+b.dataset.i, 1); drawTray(); } });
+function upd() { const n = tray.length; $('#send').disabled = !n && !$('#txt').value.trim(); $('#send').textContent = n ? `전송 ${n}` : '전송'; }
+function grow() { const t = $('#txt'); t.style.height = '40px'; t.style.height = Math.min(t.scrollHeight + 2, 140) + 'px'; upd(); }
+
+$('#send').onclick = send;
+$('#txt').addEventListener('input', grow);
+$('#txt').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+  if (e.metaKey || e.ctrlKey || (DEV === 'pc' && !e.shiftKey)) { e.preventDefault(); send(); }
+});
+$('#pick').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
+document.addEventListener('paste', e => {
+  const files = [...(e.clipboardData && e.clipboardData.files || [])];
+  if (files.length) { e.preventDefault(); addFiles(files); }
+});
+let dragN = 0;
+addEventListener('dragenter', e => { if ([...e.dataTransfer.types].includes('Files')) { dragN++; $('#drop').classList.add('on'); } });
+addEventListener('dragleave', () => { if (--dragN <= 0) { dragN = 0; $('#drop').classList.remove('on'); } });
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); dragN = 0; $('#drop').classList.remove('on'); if (e.dataTransfer.files.length) addFiles([...e.dataTransfer.files]); });
+
+/* ---------- 기타 ---------- */
+function copy(t) {
+  const done = () => toast('복사했어요');
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(done, fb); else fb();
+  function fb() { const a = document.createElement('textarea'); a.value = t; a.style.position = 'fixed'; a.style.opacity = '0'; document.body.append(a); a.select(); try { document.execCommand('copy'); done(); } catch (e) { prompt('복사해서 쓰세요', t); } a.remove(); }
+}
+let tt; function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 2400); }
+
+$('#connectBtn').onclick = async () => {
+  const s = await session();
+  $('#appUrl').textContent = s.appUrl; $('#qr').innerHTML = '';
+  if (window.QRCode) new QRCode($('#qr'), { text: s.appUrl, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+  $('#connectModal').classList.add('on');
+};
+$('#closeConnect').onclick = () => $('#connectModal').classList.remove('on');
+$('#connectModal').onclick = e => { if (e.target.id === 'connectModal') $('#connectModal').classList.remove('on'); };
+$('#copyUrl').onclick = () => copy($('#appUrl').textContent);
+
+/* ---------- 자가시험 (?selftest=1 / ?selftest=clean) ---------- */
+function makePng(n) {
+  const c = document.createElement('canvas'); c.width = 480; c.height = 360;
+  const x = c.getContext('2d'); x.fillStyle = ['#2f6f5e', '#c0453c', '#3b6fb6'][n % 3]; x.fillRect(0, 0, 480, 360);
+  x.fillStyle = '#fff'; x.font = 'bold 64px sans-serif'; x.textAlign = 'center'; x.fillText('시험 ' + n, 240, 200);
+  return new Promise(r => c.toBlob(b => r(new File([b], `시험사진 ${n}.png`, { type: 'image/png' })), 'image/png'));
+}
+async function selftest(mode) {
+  const box = $('#test'), log = m => box.textContent += m + '\n';
+  box.hidden = false; box.textContent = `🔧 자가시험 · ${DEVL[DEV]} 화면\n`;
+  try {
+    await load();
+    if (mode === 'clean') {
+      const t = items.filter(i => i.test);
+      await Promise.all(t.map(trash)); log(`🧹 시험 데이터 ${t.length}개를 휴지통으로 옮겼어요`); sig = null; await loop(); return;
+    }
+    const files = [...await Promise.all([1, 2, 3].map(makePng)), new File(['폰 브릿지 시험 파일입니다.'], '시험 파일.txt', { type: 'text/plain' })];
+    log('보내는 중: 사진 3 + 파일 1 + 글 1 (한 묶음)');
+    const t0 = Date.now();
+    const r = await sendBatch(`자가시험 ${DEVL[DEV]} → https://www.google.com`, files, { pb_test: '1' });
+    log(r.fails.length ? `❌ 업로드 실패 ${r.fails.length}개: ${r.fails[0].e.message}` : `✅ 5개 업로드 완료 (${((Date.now() - t0) / 1000).toFixed(1)}초)`);
+    let g;
+    for (let k = 0; k < 10; k++) { g = groupOf(r.key); if (g && g.list.length === 5) break; await sleep(1500); await load(); }
+    log(g && g.list.length === 5 ? `✅ 목록에 한 묶음으로 보임: ${summary(g.list)}` : `❌ 묶음이 목록에 다 안 보임 (${g ? g.list.length : 0}/5)`);
+    if (g) {
+      const im = g.list.find(i => i.kind === 'image');
+      try { const u = await blobUrl(im); log(u ? '✅ 사진 원본 내려받기 됨' : '❌ 사진 원본 없음'); } catch (e) { log('❌ 사진 원본 내려받기 실패: ' + e.message); }
+      const tx = g.list.find(i => i.kind === 'text'); log(tx && tx.text.includes('자가시험') ? '✅ 글 내용 정상' : '❌ 글 내용 이상');
+      const fl = g.list.find(i => i.kind === 'file'); try { const s = await (await api(`${DRIVE}/${fl.id}?alt=media`)).text(); log(s.includes('시험 파일') ? '✅ 파일 내용 정상' : '❌ 파일 내용 이상'); } catch (e) { log('❌ 파일 받기 실패: ' + e.message); }
+    }
+    log('끝 · 지우려면 주소 끝에 ?selftest=clean');
+  } catch (e) { log('❌ 오류: ' + (e && e.message || e)); }
+}
+
+session().then(s => {
+  const f = $('#folderBtn'); f.href = s.folderUrl; f.hidden = false; loop();
+  if (google.script.url) google.script.url.getLocation(l => { const t = l && l.parameter && l.parameter.selftest; if (t) selftest(t); });
+}).catch(e => online(false, e));
+</script>
+</body>
+</html>
