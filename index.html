@@ -91,7 +91,7 @@ h1{font-size:17px;margin:0}
 .tr button{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:11px;cursor:pointer;padding:0}
 .trn{font-size:12px;color:var(--muted);flex:none;padding:0 4px}
 .crow{display:flex;align-items:flex-end;gap:6px}
-.add{width:40px;height:40px;border-radius:50%;background:var(--card);font-size:24px;cursor:pointer;flex:none;display:grid;place-items:center;box-shadow:var(--shadow);color:var(--accent)}
+.add{width:40px;height:40px;border-radius:50%;background:var(--card);font-size:19px;cursor:pointer;flex:none;display:grid;place-items:center;box-shadow:var(--shadow);color:var(--accent)}
 #txt{flex:1;min-width:0;border:1px solid var(--line);background:var(--card);border-radius:20px;padding:9px 14px;resize:none;outline:0;max-height:140px;height:40px;line-height:1.4}
 #txt:focus{border-color:var(--accent)}
 #send{height:40px;border:0;border-radius:20px;padding:0 16px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;flex:none;white-space:nowrap}
@@ -120,6 +120,21 @@ h1{font-size:17px;margin:0}
 .vimg img{max-width:100%;max-height:100%;object-fit:contain}
 .nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:28px;cursor:pointer;border-radius:10px}
 .nav.l{left:8px}.nav.r{right:8px}
+.tb{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 13px;font-size:14px;cursor:pointer;flex:none}
+body.sel .tb#selBtn{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.selbar{display:none;align-items:center;gap:6px}
+body.sel .crow,body.sel .tray{display:none!important}
+body.sel .selbar{display:flex}
+.selbar .n{flex:1;font-weight:700;font-size:14px;min-width:0}
+.selbar .btn{padding:8px 11px;white-space:nowrap}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.red{color:var(--danger);border-color:var(--danger)}
+.chat img{-webkit-touch-callout:none}
+body.sel .chat{user-select:none;-webkit-user-select:none}
+body.sel [data-sel]{position:relative;cursor:pointer}
+body.sel [data-sel]::after{content:'';position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.28);box-shadow:0 0 0 1px rgba(0,0,0,.25);z-index:3;display:grid;place-items:center;box-sizing:border-box}
+body.sel [data-sel].picked::after{content:'✓';background:var(--accent);border-color:var(--accent);color:#fff;font-size:13px;font-weight:700}
+body.sel .msg[data-sel].picked .stack,body.sel .fr[data-sel].picked,body.sel .tile[data-sel].picked{outline:3px solid var(--accent);outline-offset:1px;border-radius:14px}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:80;max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translateX(-50%)}
 </style>
@@ -130,6 +145,7 @@ h1{font-size:17px;margin:0}
     <div class="logo">⇄</div>
     <div><h1>폰 브릿지</h1><div class="st"><span class="dot off" id="dot"></span><span id="stat">연결 중…</span></div></div>
     <div class="sp"></div>
+    <button class="tb" id="selBtn" title="여러 개 골라서 지우기·저장">선택</button>
     <a class="ib" id="folderBtn" href="#" title="드라이브 폴더 열기" hidden>📁</a>
     <button class="ib" id="connectBtn" title="다른 기기 연결">📱</button>
   </div>
@@ -149,9 +165,16 @@ h1{font-size:17px;margin:0}
   <div class="cin">
     <div class="tray" id="tray" hidden></div>
     <div class="crow">
-      <label class="add" title="사진·파일 추가">＋<input type="file" id="pick" multiple hidden></label>
+      <label class="add" title="사진·동영상 여러 장 고르기">🖼️<input type="file" id="pickImg" accept="image/*,video/*" multiple hidden></label>
+      <label class="add" title="파일 여러 개 고르기">📎<input type="file" id="pick" multiple hidden></label>
       <textarea id="txt" rows="1" placeholder="메시지나 링크 입력"></textarea>
       <button id="send" target="_self" disabled>전송</button>
+    </div>
+    <div class="selbar" id="selbar">
+      <span class="n" id="selN"></span>
+      <button class="btn" id="selAll">전체</button>
+      <button class="btn" id="selSave">⬇︎ 저장</button>
+      <button class="btn red" id="selDel">🗑️ 삭제</button>
     </div>
   </div>
 </div>
@@ -176,7 +199,7 @@ h1{font-size:17px;margin:0}
   </div>
 </div>
 <div class="viewer" id="viewer">
-  <div class="vtop"><button class="ib" id="vClose" title="닫기">✕</button><span id="vCount"></span><div class="sp"></div><a class="ib" id="vSave" title="저장">⬇︎</a></div>
+  <div class="vtop"><button class="ib" id="vClose" title="닫기">✕</button><span id="vCount"></span><div class="sp"></div><button class="ib" id="vDel" title="이 사진 삭제">🗑️</button><a class="ib" id="vSave" title="저장">⬇︎</a></div>
   <div class="vimg" id="vBox"><img id="vImg" alt=""><button class="nav l" id="vPrev">‹</button><button class="nav r" id="vNext">›</button></div>
 </div>
 <div class="toast" id="toast"></div>
@@ -335,7 +358,7 @@ function fileIcon(it) {
   if (/document|word|hwp|doc|text/.test(m + n)) return '📄'; return '📦';
 }
 const thumbAt = (it, px) => it.thumb ? it.thumb.replace(/=s\d+$/, '=s' + px) : '';
-const tile = (it, px, extra = '') => `<div class="tile" data-a="view" data-id="${it.id}"><img loading="lazy" alt="" data-id="${it.id}" src="${esc(thumbAt(it, px) || blobs[it.id] || '')}">${extra}</div>`;
+const tile = (it, px, extra = '', selectable = false) => `<div class="tile" data-a="view" data-id="${it.id}"${selectable ? ` data-sel="${it.id}"` : ''}><img loading="lazy" alt="" data-id="${it.id}" src="${esc(thumbAt(it, px) || blobs[it.id] || '')}">${extra}</div>`;
 
 function gridHTML(imgs) {
   const n = imgs.length, cls = n <= 4 ? 'n' + n : 'nm', show = imgs.slice(0, 9);
@@ -343,7 +366,7 @@ function gridHTML(imgs) {
 }
 function frHTML(it, meta) {
   const sub = (it.size ? size(it.size) : '구글 문서') + (meta ? ' · ' + DEVL[it.dev] + ' · ' + when(it.ts) : '');
-  return `<a class="fr" href="${esc(it.dl || it.view)}" target="_blank" rel="noopener"><div class="ic">${fileIcon(it)}</div><div style="min-width:0"><div class="nm">${esc(it.name)}</div><div class="sz">${sub}</div></div><span class="dl">${it.dl ? '⬇︎' : '↗'}</span></a>`;
+  return `<a class="fr" href="${esc(it.dl || it.view)}" target="_blank" rel="noopener"${meta ? ` data-sel="${it.id}"` : ''}><div class="ic">${fileIcon(it)}</div><div style="min-width:0"><div class="nm">${esc(it.name)}</div><div class="sz">${sub}</div></div><span class="dl">${it.dl ? '⬇︎' : '↗'}</span></a>`;
 }
 function textHTML(t) {
   const s = t.text.trim();
@@ -360,7 +383,7 @@ function groupHTML(g) {
   if (files.length) s += `<div class="files">${files.map(f => frHTML(f)).join('')}</div>`;
   texts.forEach(t => s += textHTML(t));
   const me = g.dev === DEV, n = g.list.length;
-  return `<div class="msg ${me ? 'me' : ''}" data-g="${esc(g.key)}">${me ? '' : `<div class="who">${DEVL[g.dev] || g.dev}</div>`}<div class="line"><div class="stack">${s}</div><div class="side"><button class="more" data-a="more" title="더보기">⋯</button>${n > 1 ? `<span class="cnt">${n}개</span>` : ''}<time>${hm(g.ts)}</time></div></div></div>`;
+  return `<div class="msg ${me ? 'me' : ''}" data-g="${esc(g.key)}" data-sel="${g.list.map(i => i.id).join(',')}">${me ? '' : `<div class="who">${DEVL[g.dev] || g.dev}</div>`}<div class="line"><div class="stack">${s}</div><div class="side"><button class="more" data-a="more" title="더보기">⋯</button>${n > 1 ? `<span class="cnt">${n}개</span>` : ''}<time>${hm(g.ts)}</time></div></div></div>`;
 }
 function pendHTML(p) {
   let s = '';
@@ -387,16 +410,16 @@ function render() {
       h += groupHTML(g);
     }
     h += pend.map(pendHTML).join('');
-    if (!h) h = `<div class="empty">아직 아무것도 없어요.<br>아래 <b>＋</b>로 사진·파일을 고르거나 글을 써서 보내 보세요.<br><span class="hint">여러 개를 한 번에 고르면 한 묶음으로 보내져요.</span></div>`;
+    if (!h) h = `<div class="empty">아직 아무것도 없어요.<br>아래 <b>🖼️ 사진</b>이나 <b>📎 파일</b> 버튼으로 여러 개를 한 번에 고르고,<br>글을 써서 <b>전송</b>하면 한 묶음으로 보내져요.<br><span class="hint">지우려면 위의 <b>선택</b>을 눌러 고른 뒤 🗑️ 삭제</span></div>`;
   } else if (filter === 'image') {
     const l = rev.filter(i => i.kind === 'image');
-    h = l.length ? `<div class="gal">${l.map(it => tile(it, 400)).join('')}</div>` : emptyMsg('사진');
+    h = l.length ? `<div class="gal">${l.map(it => tile(it, 400, '', true)).join('')}</div>` : emptyMsg('사진');
   } else if (filter === 'file') {
     const l = rev.filter(i => i.kind === 'file');
     h = l.length ? `<div class="files" style="width:100%">${l.map(it => frHTML(it, true)).join('')}</div>` : emptyMsg('파일');
   } else {
     const l = rev.filter(i => i.kind === 'text');
-    h = l.length ? `<div class="list">${l.map(t => `<div class="msg" style="max-width:100%" data-g="${esc(t.batch)}"><div class="who">${DEVL[t.dev]} · ${when(t.ts)}</div><div class="line"><div class="stack" style="min-width:0">${textHTML(t)}</div><div class="side"><button class="more" data-a="more">⋯</button></div></div></div>`).join('')}</div>` : emptyMsg('링크나 글');
+    h = l.length ? `<div class="list">${l.map(t => `<div class="msg" style="max-width:100%" data-g="${esc(t.batch)}" data-sel="${t.id}"><div class="who">${DEVL[t.dev]} · ${when(t.ts)}</div><div class="line"><div class="stack" style="min-width:0">${textHTML(t)}</div><div class="side"><button class="more" data-a="more">⋯</button></div></div></div>`).join('')}</div>` : emptyMsg('링크나 글');
   }
   box.innerHTML = h;
   box.querySelectorAll('img[data-id]').forEach(img => {
@@ -409,7 +432,59 @@ function render() {
   if (stick && filter === 'all') main.scrollTop = main.scrollHeight;
   if (filter !== 'all' && first) main.scrollTop = 0;
   first = false;
+  paintSel();
 }
+
+/* ---------- 선택해서 지우기·저장 ---------- */
+let selMode = false, sel = new Set(), lpT = null, lpFired = false;
+function setSel(on, ids) {
+  selMode = on; sel = new Set(ids || []);
+  document.body.classList.toggle('sel', on);
+  $('#selBtn').textContent = on ? '완료' : '선택';
+  paintSel();
+}
+function paintSel() {
+  const live = new Set(items.map(i => i.id));
+  sel.forEach(id => { if (!live.has(id)) sel.delete(id); });
+  document.querySelectorAll('#chat [data-sel]').forEach(el =>
+    el.classList.toggle('picked', selMode && el.dataset.sel.split(',').every(i => sel.has(i))));
+  const n = sel.size, list = items.filter(i => sel.has(i.id));
+  $('#selN').textContent = n ? `${n}개 선택됨` : '지울 것을 눌러 고르세요';
+  $('#selDel').disabled = !n;
+  $('#selSave').disabled = !list.some(i => i.kind !== 'text');
+}
+function toggleEl(el) {
+  const ids = el.dataset.sel.split(','), all = ids.every(i => sel.has(i));
+  ids.forEach(i => all ? sel.delete(i) : sel.add(i)); paintSel();
+}
+$('#selBtn').onclick = () => setSel(!selMode);
+$('#chat').addEventListener('click', e => {
+  if (lpFired) { lpFired = false; e.preventDefault(); e.stopPropagation(); return; }
+  if (!selMode) return;
+  e.preventDefault(); e.stopPropagation();
+  const el = e.target.closest('[data-sel]'); if (el) toggleEl(el);
+}, true);
+$('#chat').addEventListener('touchstart', e => {
+  const el = e.target.closest('[data-sel]'); if (!el || selMode) return;
+  lpT = setTimeout(() => { lpFired = true; setSel(true); toggleEl(el); if (navigator.vibrate) navigator.vibrate(20); }, 550);
+}, { passive: true });
+['touchend', 'touchmove', 'touchcancel'].forEach(t => $('#chat').addEventListener(t, () => clearTimeout(lpT), { passive: true }));
+$('#chat').addEventListener('contextmenu', e => { if (e.target.closest('[data-sel]') && ('ontouchstart' in window)) e.preventDefault(); });
+$('#selAll').onclick = () => {
+  const ids = [...document.querySelectorAll('#chat [data-sel]')].flatMap(el => el.dataset.sel.split(','));
+  const all = ids.length && ids.every(i => sel.has(i));
+  sel = new Set(all ? [] : ids); paintSel();
+};
+$('#selSave').onclick = () => saveAll(items.filter(i => sel.has(i.id) && i.kind !== 'text'));
+$('#selDel').onclick = async () => {
+  const list = items.filter(i => sel.has(i.id)); if (!list.length) return;
+  if (!confirm(`${list.length}개(${summary(list)})를 지울까요?\n드라이브 휴지통으로 옮겨져서 30일 동안은 되살릴 수 있어요.`)) return;
+  toast('지우는 중…');
+  const res = await pool(list.map(it => () => trash(it)), 5);
+  const bad = res.filter(r => !r.ok).length, gone = new Set(list.filter((_, k) => res[k].ok).map(i => i.id));
+  items = items.filter(i => !gone.has(i.id)); setSel(false); render();
+  toast(bad ? `${bad}개는 지우지 못했어요` : `${gone.size}개를 휴지통으로 옮겼어요`); loop();
+};
 
 async function blobUrl(it) {
   if (blobs[it.id]) return blobs[it.id];
@@ -434,6 +509,15 @@ function showV() {
 const stepV = d => { const n = vIdx + d; if (n >= 0 && n < vList.length) { vIdx = n; showV(); } };
 const closeV = () => $('#viewer').classList.remove('on');
 $('#vPrev').onclick = () => stepV(-1); $('#vNext').onclick = () => stepV(1); $('#vClose').onclick = closeV;
+$('#vDel').onclick = async () => {
+  const it = vList[vIdx]; if (!it || !confirm(`"${it.name}"을(를) 지울까요?\n드라이브 휴지통으로 옮겨져서 30일 동안은 되살릴 수 있어요.`)) return;
+  try {
+    await trash(it);
+    items = items.filter(i => i.id !== it.id); vList.splice(vIdx, 1);
+    if (!vList.length) closeV(); else { vIdx = Math.min(vIdx, vList.length - 1); showV(); }
+    render(); toast('휴지통으로 옮겼어요'); loop();
+  } catch (e) { toast('삭제 실패: ' + e.message); }
+};
 $('#vBox').addEventListener('click', e => { if (e.target.id === 'vBox') closeV(); });
 let tx = null;
 $('#vBox').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
@@ -605,7 +689,7 @@ $('#txt').addEventListener('keydown', e => {
   if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
   if (e.metaKey || e.ctrlKey || (DEV === 'pc' && !e.shiftKey)) { e.preventDefault(); send(); }
 });
-$('#pick').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
+$('#pick').onchange = $('#pickImg').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
 document.addEventListener('paste', e => {
   const files = [...(e.clipboardData && e.clipboardData.files || [])];
   if (files.length) { e.preventDefault(); addFiles(files); }
